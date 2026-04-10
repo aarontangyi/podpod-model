@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PODPOD 经济模型测算</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Helvetica Neue',sans-serif;background:#F5F4F1;color:#1a1a1a;min-height:100vh;padding:24px 16px 60px}
+.wrap{max-width:700px;margin:0 auto}
+h1{font-size:20px;font-weight:600;letter-spacing:-.3px}
+.sub{font-size:13px;color:#888;margin:4px 0 28px}
+.sec{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin:20px 0 10px}
+.divider{border:none;border-top:1px solid #e8e6e1;margin:20px 0}
+.card{background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:12px;border:1px solid #ede9e0}
+.sl-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sl-row:last-child{margin-bottom:0}
+.sl-label{font-size:12.5px;color:#555;width:168px;flex-shrink:0}
+.sl-val{font-size:12.5px;font-weight:600;width:68px;text-align:right;flex-shrink:0;color:#1a1a1a}
+.sl-note{font-size:11px;color:#bbb;margin-top:-6px;margin-bottom:10px;padding-left:180px}
+input[type=range]{flex:1;accent-color:#7C5CFC;height:4px;cursor:pointer}
+.btn-group{display:flex;gap:8px;margin-bottom:20px}
+.sc-btn{flex:1;padding:10px 0;font-size:13px;border-radius:10px;cursor:pointer;border:1.5px solid #ddd;background:#fff;color:#888;transition:all .15s}
+.sc-btn.active{background:#7C5CFC;border-color:#7C5CFC;color:#fff;font-weight:600}
+.tab-wrap{display:flex;border-radius:10px;overflow:hidden;border:1.5px solid #ddd;margin-bottom:16px}
+.tab-btn{flex:1;padding:8px 0;font-size:13px;background:#fff;border:none;border-right:1px solid #ddd;cursor:pointer;color:#888;transition:all .15s}
+.tab-btn:last-child{border-right:none}
+.tab-btn.active{background:#7C5CFC;color:#fff;font-weight:600}
+.inv-group{display:flex;gap:8px;margin-bottom:16px}
+.inv-btn{flex:1;padding:10px 6px;font-size:12.5px;text-align:center;border-radius:10px;cursor:pointer;border:1.5px solid #ddd;background:#fff;color:#888;transition:all .15s}
+.inv-btn.av{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
+.inv-btn.ao{background:#378ADD;border-color:#378ADD;color:#fff;font-weight:600}
+.inv-btn.ap{background:#7C5CFC;border-color:#7C5CFC;color:#fff;font-weight:600}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mc{background:#F9F8F5;border-radius:12px;padding:13px 15px;border:1px solid #ede9e0}
+.mc-label{font-size:11px;color:#888;margin-bottom:4px}
+.mc-value{font-size:20px;font-weight:600;color:#1a1a1a}
+.mc-sub{font-size:10.5px;color:#aaa;margin-top:3px}
+.party-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.pc{border-radius:12px;padding:13px 14px;border:1.5px solid #ede9e0}
+.pc-name{font-size:10px;font-weight:600;letter-spacing:.04em;margin-bottom:6px}
+.pc-val{font-size:18px;font-weight:700;margin-bottom:3px}
+.pc-sub{font-size:10px;color:#aaa}
+.pc-invest{font-size:10px;color:#E24B4A;margin-top:5px}
+.br-row{display:flex;justify-content:space-between;font-size:12.5px;color:#666;padding:6px 0;border-bottom:1px solid #f0ede6}
+.br-row:last-child{border-bottom:none;padding-top:10px;margin-top:2px;font-weight:700;font-size:13px;color:#1a1a1a}
+.bar-bg{background:#ede9e0;border-radius:4px;height:8px;display:flex;overflow:hidden;margin-top:12px}
+.bar-seg{height:8px;transition:width .3s}
+.bar-labels{display:flex;flex-wrap:wrap;gap:8px;margin-top:7px;font-size:10.5px;color:#aaa}
+.roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.roi-period{font-size:32px;font-weight:700;margin:6px 0 3px}
+.sum-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0ede6;font-size:12.5px}
+.sum-row:last-child{border-bottom:none}
+.sum-label{color:#666}
+.sum-val{font-weight:600;color:#1a1a1a;text-align:right}
+.alert{border-radius:12px;padding:13px 15px;font-size:12px;line-height:1.75;margin-top:12px;display:none}
+.save-bar{display:flex;gap:8px;align-items:center}
+.save-input{flex:1;padding:9px 13px;border:1.5px solid #ddd;border-radius:10px;font-size:13px;background:#fff;color:#1a1a1a;outline:none}
+.save-input:focus{border-color:#7C5CFC}
+.save-btn{padding:9px 18px;background:#7C5CFC;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.save-btn:hover{opacity:.88}
+.hist-empty{font-size:12.5px;color:#aaa;padding:12px 0 4px}
+.hist-item{background:#F9F8F5;border:1px solid #ede9e0;border-radius:12px;padding:13px 15px;margin-bottom:8px}
+.hist-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.hist-name{font-size:13px;font-weight:600;color:#1a1a1a}
+.hist-time{font-size:10.5px;color:#aaa}
+.hist-stats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.hist-tag{font-size:11px;background:#fff;border:1px solid #ede9e0;border-radius:6px;padding:3px 8px;color:#555}
+.hist-actions{display:flex;gap:6px}
+.hist-restore{font-size:12px;padding:6px 13px;border-radius:8px;border:1.5px solid #7C5CFC;color:#7C5CFC;background:#fff;cursor:pointer;font-weight:500}
+.hist-restore:hover{background:#7C5CFC;color:#fff}
+.hist-del{font-size:12px;padding:6px 10px;border-radius:8px;border:1.5px solid #ddd;color:#aaa;background:#fff;cursor:pointer}
+.hist-del:hover{border-color:#E24B4A;color:#E24B4A}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PODPOD 经济模型测算</h1>
+  <p class="sub">调整参数，实时查看三方收益与回收周期</p>
+
+  <div class="btn-group">
+    <button class="sc-btn" onclick="setSc('low',this)">保守场景</button>
+    <button class="sc-btn active" onclick="setSc('mid',this)">基准场景</button>
+    <button class="sc-btn" onclick="setSc('high',this)">乐观场景</button>
+  </div>
+
+  <p class="sec">流量 · 转化</p>
+  <div class="card">
+    <div class="sl-row">
+      <span class="sl-label">日均进馆人数</span>
+      <input type="range" min="0" max="20000" step="100" value="3000" id="s-visitors" oninput="upd()">
+      <span class="sl-val" id="v-visitors">3,000</span>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">打卡参与率</span>
+      <input type="range" min="0" max="100" step="1" value="30" id="s-engage" oninput="upd()">
+      <span class="sl-val" id="v-engage">30%</span>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">打卡→购买转化率</span>
+      <input type="range" min="0" max="100" step="1" value="25" id="s-conv" oninput="upd()">
+      <span class="sl-val" id="v-conv">25%</span>
+    </div>
+  </div>
+
+  <p class="sec">打卡点位设置</p>
+  <div class="card">
+    <div class="sl-row">
+      <span class="sl-label">场馆打卡点位总数</span>
+      <input type="range" min="1" max="30" step="1" value="5" id="s-spots" oninput="upd()">
+      <span class="sl-val" id="v-spots">5 个</span>
+    </div>
+    <div style="font-size:11px;color:#bbb;margin:-4px 0 10px 180px">仅用于展示，不直接影响成本计算</div>
+    <div class="sl-row">
+      <span class="sl-label">人均打卡次数</span>
+      <input type="range" min="1" max="15" step="0.5" value="3" id="s-checkins" oninput="upd()">
+      <span class="sl-val" id="v-checkins">3 次</span>
+    </div>
+    <div style="font-size:11px;color:#bbb;margin:-4px 0 0 180px">每次打卡触发一次 AI 生成，直接影响 AI 成本</div>
+  </div>
+
+  <p class="sec">商品 · 客单</p>
+  <div class="card">
+    <div class="sl-row">
+      <span class="sl-label">客单价（元）</span>
+      <input type="range" min="0" max="500" step="1" value="59" id="s-aov" oninput="upd()">
+      <span class="sl-val" id="v-aov">¥59</span>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">商品成本率</span>
+      <input type="range" min="0" max="100" step="1" value="22" id="s-cogs" oninput="upd()">
+      <span class="sl-val" id="v-cogs">22%</span>
+    </div>
+  </div>
+
+  <p class="sec">AI 生成成本</p>
+  <div class="card" style="background:#FFFBF0;border-color:#F5DFA0">
+    <div class="sl-row">
+      <span class="sl-label" style="color:#92600A">单次打卡 AI 成本（元）</span>
+      <input type="range" min="0" max="5" step="0.1" value="0.5" id="s-aicost" oninput="upd()">
+      <span class="sl-val" id="v-aicost" style="color:#92600A">¥0.5</span>
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-top:4px">图片 + AR 视频生成合计 API 成本 / 次触发 · 人均打卡次数 × 此值 = 每位参与者的 AI 总成本</div>
+  </div>
+
+  <p class="sec">三方分成比例</p>
+  <div class="card">
+    <div style="font-size:11px;color:#aaa;margin-bottom:12px">以下分成从 GMV 中依次扣除，剩余为 PODPOD 品牌方毛利</div>
+    <div class="sl-row">
+      <span class="sl-label" style="color:#1D9E75">景区分成比例</span>
+      <input type="range" min="0" max="100" step="1" value="20" id="s-venue" oninput="upd()">
+      <span class="sl-val" id="v-venue" style="color:#1D9E75">20%</span>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label" style="color:#378ADD">运营方分成比例</span>
+      <input type="range" min="0" max="100" step="1" value="15" id="s-ops" oninput="upd()">
+      <span class="sl-val" id="v-ops" style="color:#378ADD">15%</span>
+    </div>
+  </div>
+
+  <p class="sec">初次投入成本</p>
+  <div class="card">
+    <div style="font-size:12px;color:#666;margin-bottom:10px">选择由哪一方承担：</div>
+    <div class="inv-group">
+      <button class="inv-btn" id="tb-venue" onclick="setInv('venue',this)">景区承担</button>
+      <button class="inv-btn ao" id="tb-ops" onclick="setInv('ops',this)">运营方承担</button>
+      <button class="inv-btn" id="tb-pod" onclick="setInv('pod',this)">PODPOD 承担</button>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">硬件设备（元）</span>
+      <input type="range" min="0" max="500000" step="5000" value="60000" id="s-hw" oninput="upd()">
+      <span class="sl-val" id="v-hw">¥6万</span>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">AI 模板开发（元）</span>
+      <input type="range" min="0" max="200000" step="5000" value="30000" id="s-dev" oninput="upd()">
+      <span class="sl-val" id="v-dev">¥3万</span>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">首批商品备货（元）</span>
+      <input type="range" min="0" max="200000" step="5000" value="20000" id="s-inv" oninput="upd()">
+      <span class="sl-val" id="v-inv">¥2万</span>
+    </div>
+    <div class="sl-row">
+      <span class="sl-label">其他部署成本（元）</span>
+      <input type="range" min="0" max="100000" step="5000" value="10000" id="s-misc" oninput="upd()">
+      <span class="sl-val" id="v-misc">¥1万</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <p class="sec">收益周期</p>
+  <div class="tab-wrap">
+    <button class="tab-btn" id="tab-day"   onclick="setTab('day',this)">日</button>
+    <button class="tab-btn active" id="tab-month" onclick="setTab('month',this)">月</button>
+    <button class="tab-btn" id="tab-year"  onclick="setTab('year',this)">年</button>
+  </div>
+
+  <div class="metrics">
+    <div class="mc"><div class="mc-label" id="lbl-orders">月均订单量</div><div class="mc-value" id="r-orders">—</div><div class="mc-sub">笔</div></div>
+    <div class="mc"><div class="mc-label" id="lbl-gmv">月均零售额</div><div class="mc-value" id="r-gmv">—</div><div class="mc-sub">元</div></div>
+    <div class="mc"><div class="mc-label" id="lbl-checkins">月均打卡人次</div><div class="mc-value" id="r-checkins">—</div><div class="mc-sub">人次（参与者 × 人均打卡次数）</div></div>
+    <div class="mc"><div class="mc-label" id="lbl-ai">月 AI 生成成本</div><div class="mc-value" id="r-ai" style="color:#BA7517">—</div><div class="mc-sub">元</div></div>
+  </div>
+
+  <hr class="divider">
+
+  <p class="sec">三方收益</p>
+  <div class="party-grid">
+    <div class="pc" style="background:#F0FBF6;border-color:#9FE1CB">
+      <div class="pc-name" style="color:#0F6E56">景区</div>
+      <div class="pc-val" style="color:#1D9E75" id="p-venue">—</div>
+      <div class="pc-sub" id="p-venue-sub">分成 / 月</div>
+      <div class="pc-invest" id="p-venue-invest"></div>
+    </div>
+    <div class="pc" style="background:#EFF6FF;border-color:#85B7EB">
+      <div class="pc-name" style="color:#185FA5">运营方</div>
+      <div class="pc-val" style="color:#378ADD" id="p-ops">—</div>
+      <div class="pc-sub" id="p-ops-sub">分成 / 月</div>
+      <div class="pc-invest" id="p-ops-invest"></div>
+    </div>
+    <div class="pc" style="background:#F3F0FF;border-color:#AFA9EC">
+      <div class="pc-name" style="color:#3C3489">PODPOD</div>
+      <div class="pc-val" style="color:#7C5CFC" id="p-pod">—</div>
+      <div class="pc-sub" id="p-pod-sub">毛利 / 月</div>
+      <div class="pc-invest" id="p-pod-invest"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="br-row"><span>月 GMV</span><span id="b-gmv">—</span></div>
+    <div class="br-row"><span style="color:#1D9E75">景区分成</span><span id="b-venue" style="color:#1D9E75">—</span></div>
+    <div class="br-row"><span style="color:#378ADD">运营方分成</span><span id="b-ops" style="color:#378ADD">—</span></div>
+    <div class="br-row"><span style="color:#D85A30">商品成本</span><span id="b-cogs" style="color:#D85A30">—</span></div>
+    <div class="br-row"><span style="color:#BA7517">AI 生成成本</span><span id="b-ai-br" style="color:#BA7517">—</span></div>
+    <div class="br-row"><span>PODPOD 月毛利</span><span id="b-net" style="color:#7C5CFC">—</span></div>
+    <div class="bar-bg">
+      <div class="bar-seg" id="bar-v" style="background:#1D9E75"></div>
+      <div class="bar-seg" id="bar-o" style="background:#378ADD"></div>
+      <div class="bar-seg" id="bar-c" style="background:#D85A30"></div>
+      <div class="bar-seg" id="bar-a" style="background:#BA7517"></div>
+      <div class="bar-seg" id="bar-n" style="background:#7C5CFC"></div>
+    </div>
+    <div class="bar-labels">
+      <span id="lbl-v">景区 20%</span><span id="lbl-o">运营 15%</span>
+      <span id="lbl-c">成本 22%</span><span id="lbl-a">AI —%</span>
+      <span id="lbl-n">PODPOD —%</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <p class="sec">初次投入回收</p>
+  <div class="card">
+    <div class="roi-grid">
+      <div>
+        <div class="mc-label">初次投入总额</div>
+        <div style="font-size:22px;font-weight:700;margin:4px 0" id="roi-total">—</div>
+        <div class="mc-sub" id="roi-bearer">—</div>
+      </div>
+      <div>
+        <div class="mc-label" id="roi-income-lbl">承担方月收益</div>
+        <div style="font-size:22px;font-weight:700;margin:4px 0" id="roi-income">—</div>
+        <div class="mc-sub">元 / 月</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #f0ede6;padding-top:14px">
+      <div class="mc-label">预计回收周期</div>
+      <div class="roi-period" id="roi-period">—</div>
+      <div style="font-size:11.5px;color:#aaa;margin-top:3px" id="roi-note">—</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:4px">
+    <div style="font-size:13px;font-weight:600;margin-bottom:12px">财务模型总结</div>
+    <div class="sum-row"><span class="sum-label">场馆打卡点位总数</span><span class="sum-val" id="sm-spots">—</span></div>
+    <div class="sum-row"><span class="sum-label">人均打卡次数</span><span class="sum-val" id="sm-checkins">—</span></div>
+    <div class="sum-row"><span class="sum-label">月均 GMV</span><span class="sum-val" id="sm-gmv">—</span></div>
+    <div class="sum-row"><span class="sum-label">PODPOD 月毛利</span><span class="sum-val" id="sm-pod">—</span></div>
+    <div class="sum-row"><span class="sum-label">PODPOD 年化毛利</span><span class="sum-val" id="sm-pod-yr">—</span></div>
+    <div class="sum-row"><span class="sum-label" style="color:#1D9E75">景区月收益</span><span class="sum-val" id="sm-venue" style="color:#1D9E75">—</span></div>
+    <div class="sum-row"><span class="sum-label" style="color:#378ADD">运营方月收益</span><span class="sum-val" id="sm-ops" style="color:#378ADD">—</span></div>
+    <div class="sum-row"><span class="sum-label" style="color:#BA7517">月 AI 成本 / 占 GMV</span><span class="sum-val" id="sm-ai" style="color:#BA7517">—</span></div>
+    <div class="sum-row"><span class="sum-label">初次投入 / 承担方</span><span class="sum-val" id="sm-invest">—</span></div>
+    <div class="sum-row"><span class="sum-label">预计回收周期</span><span class="sum-val" id="sm-period">—</span></div>
+  </div>
+
+  <div class="alert" id="alert-box"></div>
+
+  <hr class="divider">
+
+  <p class="sec">保存当前方案</p>
+  <div class="card">
+    <div style="font-size:12px;color:#888;margin-bottom:10px">给当前参数配置起个名字，保存到历史记录中随时查看或恢复。</div>
+    <div class="save-bar">
+      <input class="save-input" id="save-name" type="text" placeholder="例如：野生动物园基准方案" maxlength="40">
+      <button class="save-btn" onclick="saveSnapshot()">保存</button>
+    </div>
+  </div>
+
+  <p class="sec">历史记录</p>
+  <div id="hist-list"><div class="hist-empty">暂无保存记录</div></div>
+</div>
+
+<script>
+const SC={
+  low: {visitors:1000,engage:15,conv:15,spots:5,checkins:2,aicost:0.5,aov:39,cogs:28,venue:20,ops:15,hw:60000,dev:30000,inv:20000,misc:10000},
+  mid: {visitors:3000,engage:30,conv:25,spots:5,checkins:3,aicost:0.5,aov:59,cogs:22,venue:20,ops:15,hw:60000,dev:30000,inv:20000,misc:10000},
+  high:{visitors:6000,engage:45,conv:35,spots:8,checkins:4,aicost:0.5,aov:79,cogs:18,venue:15,ops:12,hw:60000,dev:30000,inv:20000,misc:10000},
+};
+let investor='ops', tab='month';
+const HIST_KEY='podpod_history_v2';
+
+function setSc(k,btn){
+  document.querySelectorAll('.sc-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const s=SC[k];
+  Object.keys(s).forEach(id=>{const el=document.getElementById('s-'+id);if(el)el.value=s[id];});
+  upd();
+}
+
+function setInv(v,btn){
+  investor=v;
+  const cls={venue:'av',ops:'ao',pod:'ap'};
+  ['venue','ops','pod'].forEach(k=>{
+    const el=document.getElementById('tb-'+k);
+    el.className='inv-btn'+(k===v?' '+cls[v]:'');
+  });
+  upd();
+}
+
+function setTab(t,btn){
+  tab=t;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  upd();
+}
+
+function fm(n){
+  const a=Math.abs(n),s=n<0?'−':'';
+  return a>=10000?s+'¥'+(a/10000).toFixed(1)+'万':s+'¥'+Math.round(a).toLocaleString();
+}
+
+function upd(){
+  const g=id=>+document.getElementById(id).value;
+  const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+
+  const visitors=g('s-visitors');
+  const engage=g('s-engage')/100;
+  const conv=g('s-conv')/100;
+  const spots=g('s-spots');
+  const checkins=g('s-checkins');
+  const aicost=g('s-aicost');
+  const aov=g('s-aov');
+  const cogs=g('s-cogs')/100;
+  const vPctN=g('s-venue');
+  const oPctN=g('s-ops');
+  const vPct=vPctN/100, oPct=oPctN/100;
+  const hw=g('s-hw'),dev=g('s-dev'),inv_=g('s-inv'),misc=g('s-misc');
+
+  // display raw values
+  sv('v-visitors',visitors.toLocaleString());
+  sv('v-engage',Math.round(engage*100)+'%');
+  sv('v-conv',Math.round(conv*100)+'%');
+  sv('v-spots',spots+' 个');
+  sv('v-checkins',checkins+' 次');
+  sv('v-aicost','¥'+aicost.toFixed(1));
+  sv('v-aov','¥'+aov);
+  sv('v-cogs',Math.round(cogs*100)+'%');
+  sv('v-venue',vPctN+'%');
+  sv('v-ops',oPctN+'%');
+  ['hw','dev','inv','misc'].forEach(k=>{
+    const v=g('s-'+k);
+    sv('v-'+k,v>=10000?'¥'+(v/10000).toFixed(1)+'万':'¥'+v.toLocaleString());
+  });
+
+  // core calc
+  // 参与打卡人数 = 进馆人数 × 打卡参与率
+  const dParticipants = Math.round(visitors * engage);
+  // AI 生成次数 = 参与人数 × 人均打卡次数
+  const dGens = Math.round(dParticipants * checkins);
+  // 购买订单 = 参与人数 × 购买转化率
+  const dOrders = Math.round(dParticipants * conv);
+  const dRev = dOrders * aov;
+  const dAI = dGens * aicost;
+  const dVenue = dRev * vPct;
+  const dOps = dRev * oPct;
+  const dCogs = dRev * cogs;
+  const dNet = dRev - dVenue - dOps - dCogs - dAI;
+
+  const mGMV=dRev*30, mVenue=dVenue*30, mOps=dOps*30;
+  const mCogs=dCogs*30, mAI=dAI*30, mNet=dNet*30;
+
+  const mult=tab==='day'?1:tab==='month'?30:365;
+  const sfx=tab==='day'?'日':tab==='month'?'月':'年';
+
+  sv('lbl-orders',sfx+'均订单量');
+  sv('lbl-gmv',sfx+'均零售额');
+  sv('lbl-checkins',sfx+'均打卡人次');
+  sv('lbl-ai',sfx+' AI 生成成本');
+  sv('r-orders',(dOrders*mult).toLocaleString());
+  sv('r-gmv',fm(dRev*mult));
+  sv('r-checkins',(dGens*mult).toLocaleString());
+  sv('r-ai',fm(dAI*mult));
+
+  const byPeriod=d=>tab==='day'?d:tab==='month'?d*30:d*365;
+  sv('p-venue',fm(byPeriod(dVenue))); sv('p-venue-sub','分成 / '+sfx);
+  sv('p-ops',  fm(byPeriod(dOps)));   sv('p-ops-sub',  '分成 / '+sfx);
+  sv('p-pod',  fm(byPeriod(dNet)));   sv('p-pod-sub',  '毛利 / '+sfx);
+
+  const totalInvest=hw+dev+inv_+misc;
+  ['venue','ops','pod'].forEach(k=>sv('p-'+k+'-invest',''));
+  if(totalInvest>0){
+    const el=document.getElementById('p-'+investor+'-invest');
+    if(el)el.textContent='初次投入 −'+fm(totalInvest);
+  }
+
+  sv('b-gmv','¥'+Math.round(mGMV).toLocaleString());
+  sv('b-venue','−¥'+Math.round(mVenue).toLocaleString());
+  sv('b-ops','−¥'+Math.round(mOps).toLocaleString());
+  sv('b-cogs','−¥'+Math.round(mCogs).toLocaleString());
+  sv('b-ai-br','−¥'+Math.round(mAI).toLocaleString());
+  sv('b-net',(mNet>=0?'¥':'−¥')+Math.round(Math.abs(mNet)).toLocaleString());
+  document.getElementById('b-net').style.color=mNet>=0?'#7C5CFC':'#E24B4A';
+
+  const cogsPct=Math.round(cogs*100);
+  const aiPctN=mGMV>0?Math.round(mAI/mGMV*100):0;
+  const nPct=Math.max(0,100-vPctN-oPctN-cogsPct-aiPctN);
+  document.getElementById('bar-v').style.width=Math.min(vPctN,100)+'%';
+  document.getElementById('bar-o').style.width=Math.min(oPctN,100-vPctN)+'%';
+  document.getElementById('bar-c').style.width=Math.min(cogsPct,100-vPctN-oPctN)+'%';
+  document.getElementById('bar-a').style.width=Math.min(aiPctN,Math.max(0,100-vPctN-oPctN-cogsPct))+'%';
+  document.getElementById('bar-n').style.width=Math.max(0,nPct)+'%';
+  sv('lbl-v','景区 '+vPctN+'%');
+  sv('lbl-o','运营 '+oPctN+'%');
+  sv('lbl-c','成本 '+cogsPct+'%');
+  sv('lbl-a','AI '+aiPctN+'%');
+  sv('lbl-n','PODPOD '+nPct+'%');
+
+  const bNames={venue:'景区',ops:'运营方',pod:'PODPOD'};
+  const bColors={venue:'#1D9E75',ops:'#378ADD',pod:'#7C5CFC'};
+  const bMonthly={venue:mVenue,ops:mOps,pod:mNet};
+  const bInc=bMonthly[investor];
+
+  sv('roi-total',fm(totalInvest));
+  sv('roi-bearer','由 '+bNames[investor]+' 承担');
+  sv('roi-income-lbl',bNames[investor]+'月收益');
+  sv('roi-income',fm(bInc));
+  document.getElementById('roi-income').style.color=bColors[investor];
+
+  let pTxt='',pColor='',pNote='';
+  if(totalInvest===0){pTxt='无需回收';pColor='#1D9E75';pNote='初次投入为零';}
+  else if(bInc<=0){pTxt='暂无法回收';pColor='#E24B4A';pNote='承担方月收益为负，请调整参数';}
+  else{
+    const m=totalInvest/bInc;
+    pColor=m<=6?'#1D9E75':m<=12?'#BA7517':'#E24B4A';
+    pTxt=m<=1?'< 1 个月':m<=36?Math.ceil(m)+' 个月':'> 36 个月';
+    pNote='投入 '+fm(totalInvest)+' ÷ '+bNames[investor]+'月收益 '+fm(bInc)+' / 月';
+  }
+  sv('roi-period',pTxt);
+  document.getElementById('roi-period').style.color=pColor;
+  sv('roi-note',pNote);
+
+  sv('sm-spots',spots+' 个点位');
+  sv('sm-checkins',checkins+' 次 / 人');
+  sv('sm-gmv',fm(mGMV)+' / 月');
+  sv('sm-pod',fm(mNet)+' / 月');
+  sv('sm-pod-yr',fm(mNet*12)+' / 年');
+  sv('sm-venue',fm(mVenue)+' / 月（GMV '+vPctN+'%）');
+  sv('sm-ops',fm(mOps)+' / 月（GMV '+oPctN+'%）');
+  sv('sm-ai',fm(mAI)+' / 月，占 GMV '+aiPctN+'%');
+  sv('sm-invest',totalInvest>0?fm(totalInvest)+' · '+bNames[investor]+'承担':'无');
+  sv('sm-period',totalInvest>0&&bInc>0?pTxt:'—');
+
+  const alerts=[];
+  const totalSplit=vPctN+oPctN;
+  if(mNet<0){
+    alerts.push({t:'danger',m:'PODPOD 月毛利为负（'+fm(mNet)+'）。三方分成合计 '+totalSplit+'%，加上商品成本（'+cogsPct+'%）和 AI 成本（'+aiPctN+'%），总支出超出 GMV。建议降低分成比例或提升购买转化率。'});
+  } else if(totalSplit>60){
+    alerts.push({t:'warn',m:'景区（'+vPctN+'%）+ 运营方（'+oPctN+'%）分成合计 '+totalSplit+'%，偏高。叠加商品成本后 PODPOD 毛利空间收窄。'});
+  }
+  if(aiPctN>15){
+    alerts.push({t:'warn',m:'AI 成本占 GMV 已达 '+aiPctN+'%，偏高。人均打卡 '+checkins+' 次 × AI 成本 ¥'+aicost.toFixed(1)+' = 每位参与者 ¥'+(checkins*aicost).toFixed(1)+'。可考虑减少人均打卡次数，或对未购买用户仅生成低质预览图。'});
+  }
+  if(mNet>0){
+    const roiM=totalInvest>0&&bInc>0?Math.ceil(totalInvest/bInc):0;
+    alerts.push({t:'ok',m:'月 GMV '+fm(mGMV)+'，景区 '+fm(mVenue)+'、运营方 '+fm(mOps)+'、PODPOD 毛利 '+fm(mNet)+'（年化 '+fm(mNet*12)+'）。每位参与者贡献 AI 成本 ¥'+(checkins*aicost).toFixed(1)+'，月 AI 总成本 '+fm(mAI)+'。'+(roiM>0?bNames[investor]+'承担投入 '+fm(totalInvest)+'，预计 '+roiM+' 个月回收。':'')});
+  }
+
+  const ab=document.getElementById('alert-box');
+  const tc={danger:'#991B1B',warn:'#92600A',ok:'#065F46'};
+  const bc={danger:'#FEF2F2',warn:'#FFFBEB',ok:'#ECFDF5'};
+  const bdc={danger:'#FECACA',warn:'#FDE68A',ok:'#A7F3D0'};
+  if(alerts.length===0){ab.style.display='none';return;}
+  ab.style.display='block';
+  ab.style.background=bc[alerts[0].t];
+  ab.style.color=tc[alerts[0].t];
+  ab.style.border='1px solid '+bdc[alerts[0].t];
+  ab.innerHTML=alerts.map((a,i)=>`<div style="color:${tc[a.t]};${i<alerts.length-1?'margin-bottom:8px':''}">${a.m}</div>`).join('');
+}
+
+function getSnap(){
+  const g=id=>+document.getElementById(id).value;
+  return{visitors:g('s-visitors'),engage:g('s-engage'),conv:g('s-conv'),
+    spots:g('s-spots'),checkins:g('s-checkins'),
+    aicost:g('s-aicost'),aov:g('s-aov'),cogs:g('s-cogs'),
+    venue:g('s-venue'),ops:g('s-ops'),
+    hw:g('s-hw'),dev:g('s-dev'),inv:g('s-inv'),misc:g('s-misc'),
+    investor,tab};
+}
+
+function applySnap(snap){
+  const ids=['visitors','engage','conv','spots','checkins','aicost','aov','cogs','venue','ops','hw','dev','inv','misc'];
+  ids.forEach(k=>{const el=document.getElementById('s-'+k);if(el&&snap[k]!==undefined)el.value=snap[k];});
+  investor=snap.investor||'ops';
+  const cls={venue:'av',ops:'ao',pod:'ap'};
+  ['venue','ops','pod'].forEach(k=>{
+    const el=document.getElementById('tb-'+k);
+    if(el)el.className='inv-btn'+(k===investor?' '+cls[investor]:'');
+  });
+  tab=snap.tab||'month';
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const tel=document.getElementById('tab-'+tab);
+  if(tel)tel.classList.add('active');
+  upd();
+}
+
+function getHist(){try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}catch{return[];}}
+function saveHist(h){localStorage.setItem(HIST_KEY,JSON.stringify(h));}
+
+function saveSnapshot(){
+  const nameEl=document.getElementById('save-name');
+  const name=(nameEl.value||'').trim()||'未命名方案';
+  const snap=getSnap();
+  const vPct=snap.venue/100,oPct=snap.ops/100,cogs=snap.cogs/100;
+  const dPart=Math.round(snap.visitors*snap.engage/100);
+  const dGens=Math.round(dPart*snap.checkins);
+  const dRev=Math.round(dPart*snap.conv/100)*snap.aov;
+  const dAI=dGens*snap.aicost;
+  const mNet=(dRev-dRev*vPct-dRev*oPct-dRev*cogs-dAI)*30;
+  const totalInvest=snap.hw+snap.dev+snap.inv+snap.misc;
+  const bInc={venue:dRev*30*vPct,ops:dRev*30*oPct,pod:mNet}[snap.investor];
+  const roiM=totalInvest>0&&bInc>0?Math.ceil(totalInvest/bInc):null;
+  const bNm={venue:'景区',ops:'运营方',pod:'PODPOD'};
+
+  const record={id:Date.now(),name,
+    time:new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    snap,
+    summary:{
+      mGMV:fm(dRev*30),mNet:fm(mNet),
+      mVenue:fm(dRev*30*vPct),mOps:fm(dRev*30*oPct),
+      spots:snap.spots,checkins:snap.checkins,
+      roiM:roiM?roiM+'个月':'—',investor:snap.investor
+    }};
+
+  const h=getHist();
+  h.unshift(record);
+  if(h.length>20)h.pop();
+  saveHist(h);
+  nameEl.value='';
+  renderHist();
+}
+
+function deleteRecord(id){saveHist(getHist().filter(r=>r.id!==id));renderHist();}
+
+function restoreRecord(id){
+  const rec=getHist().find(r=>r.id===id);
+  if(rec){applySnap(rec.snap);window.scrollTo({top:0,behavior:'smooth'});}
+}
+
+const bNm={venue:'景区',ops:'运营方',pod:'PODPOD'};
+
+function renderHist(){
+  const h=getHist();
+  const el=document.getElementById('hist-list');
+  if(h.length===0){el.innerHTML='<div class="hist-empty">暂无保存记录</div>';return;}
+  el.innerHTML=h.map(r=>`
+    <div class="hist-item">
+      <div class="hist-header">
+        <div class="hist-name">${r.name}</div>
+        <div class="hist-time">${r.time}</div>
+      </div>
+      <div class="hist-stats">
+        <span class="hist-tag">月 GMV ${r.summary.mGMV}</span>
+        <span class="hist-tag" style="color:#7C5CFC">PODPOD ${r.summary.mNet}/月</span>
+        <span class="hist-tag" style="color:#1D9E75">景区 ${r.summary.mVenue}/月</span>
+        <span class="hist-tag" style="color:#378ADD">运营方 ${r.summary.mOps}/月</span>
+        <span class="hist-tag">${r.summary.spots}个点位 · 人均${r.summary.checkins}次</span>
+        <span class="hist-tag">投入由${bNm[r.summary.investor]}承担 · 回收${r.summary.roiM}</span>
+      </div>
+      <div class="hist-actions">
+        <button class="hist-restore" onclick="restoreRecord(${r.id})">恢复此方案</button>
+        <button class="hist-del" onclick="deleteRecord(${r.id})">删除</button>
+      </div>
+    </div>`).join('');
+}
+
+setInv('ops',document.getElementById('tb-ops'));
+renderHist();
+upd();
+</script>
+</body>
+</html>
